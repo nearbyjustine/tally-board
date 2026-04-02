@@ -172,10 +172,10 @@ export default function TeamsPage() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black uppercase tracking-tight">Teams & Members</h1>
-          <p className="text-smoke text-sm font-semibold">{teams.length} teams · {teams.reduce((s, t) => s + t.members.length, 0)} members</p>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">Teams & Members</h1>
+          <p className="text-smoke text-sm">{teams.length} teams · {teams.reduce((s, t) => s + t.members.length, 0)} members</p>
         </div>
-        <Button onClick={openAddTeam} className="gap-2 bg-flame hover:bg-ember text-white font-bold">
+        <Button onClick={openAddTeam} className="gap-2 bg-flame hover:bg-ember text-white font-heading font-semibold">
           <Plus className="h-4 w-4" /> Add Team
         </Button>
       </div>

@@ -32,21 +32,20 @@ export function PinGate({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Still checking sessionStorage
   if (authenticated === null) return null;
   if (authenticated) return <>{children}</>;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-charcoal px-4">
-      <Card className="w-full max-w-sm bg-ash border-2 border-white/10">
+      <Card className="w-full max-w-sm bg-ash border border-white/10">
         <CardHeader className="text-center">
           <div className="mx-auto mb-3 bg-flame rounded-xl p-3.5 w-fit">
-            <Flame className="h-8 w-8 text-white" />
+            <Flame className="h-7 w-7 text-white" />
           </div>
-          <CardTitle className="text-2xl font-black text-white uppercase tracking-tight">
+          <CardTitle className="font-heading text-xl font-bold text-white">
             Lagablab Admin
           </CardTitle>
-          <CardDescription className="flex items-center justify-center gap-1.5 text-white/40 font-bold text-xs uppercase tracking-wide">
+          <CardDescription className="flex items-center justify-center gap-1.5 text-white/40 text-xs font-medium">
             <Lock className="h-3 w-3" /> Enter your PIN to continue
           </CardDescription>
         </CardHeader>
@@ -63,14 +62,14 @@ export function PinGate({ children }: { children: React.ReactNode }) {
               }}
               maxLength={10}
               autoFocus
-              className={`text-center text-xl tracking-widest font-bold bg-charcoal border-white/20 text-white placeholder:text-white/30 ${error ? "border-destructive" : ""}`}
+              className={`text-center text-xl tracking-widest font-medium bg-charcoal border-white/20 text-white placeholder:text-white/30 ${error ? "border-destructive" : ""}`}
             />
             {error && (
-              <p className="text-sm font-bold text-destructive text-center">
+              <p className="text-sm font-medium text-destructive text-center">
                 {error} {attempts >= 3 && "(Hint: check your .env.local)"}
               </p>
             )}
-            <Button type="submit" className="w-full font-black uppercase tracking-wide bg-flame hover:bg-ember text-white" size="lg">
+            <Button type="submit" className="w-full font-heading font-semibold bg-flame hover:bg-ember text-white" size="lg">
               Unlock Admin Panel
             </Button>
           </form>

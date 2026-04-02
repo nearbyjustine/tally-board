@@ -8,11 +8,11 @@ import type { TeamWithScore, Game, GameScore, Mission, MissionCompletion, Deduct
 import { RANK_LABEL } from "@/utils/scoring";
 import { ChevronDown, ChevronUp, Trophy, Target, AlertTriangle } from "lucide-react";
 
-const RANK_MEDALS: Record<number, { emoji: string; label: string }> = {
-  1: { emoji: "🥇", label: "1st Place" },
-  2: { emoji: "🥈", label: "2nd Place" },
-  3: { emoji: "🥉", label: "3rd Place" },
-  4: { emoji: "4th", label: "4th Place" },
+const RANK_STYLE: Record<number, { label: string; color: string }> = {
+  1: { label: "1st Place", color: "#FACC15" },
+  2: { label: "2nd Place", color: "#A8A29E" },
+  3: { label: "3rd Place", color: "#D97706" },
+  4: { label: "4th Place", color: "#78716C" },
 };
 
 interface TeamCardProps {
@@ -34,7 +34,7 @@ export function TeamCard({
 }: TeamCardProps) {
   const [expanded, setExpanded] = useState(false);
 
-  const medal = RANK_MEDALS[team.rank] ?? RANK_MEDALS[4];
+  const rankInfo = RANK_STYLE[team.rank] ?? RANK_STYLE[4];
 
   const teamGameScores = gameScores
     .filter((gs) => gs.team_id === team.id)
@@ -54,162 +54,168 @@ export function TeamCard({
   const teamDeductions = deductions.filter((d) => d.team_id === team.id);
 
   return (
-    <Card className="overflow-hidden border-2 border-border bg-white">
-      {/* Color bar */}
-      <div className="h-2 w-full" style={{ backgroundColor: team.color }} />
+    <Card
+      className={`overflow-hidden bg-white ${team.rank === 1 ? "card-first-place" : "shadow-card"} hover:shadow-card-hover transition-shadow`}
+    >
+      <div className="flex">
+        {/* Left color border */}
+        <div className="w-1.5 shrink-0 rounded-l-xl" style={{ backgroundColor: team.color }} />
 
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {/* Rank circle */}
-            <div
-              className="h-14 w-14 rounded-full flex items-center justify-center text-white font-black text-lg shrink-0"
-              style={{ backgroundColor: team.color }}
-            >
-              {team.rank <= 3 ? (
-                <span className="text-2xl">{medal.emoji}</span>
-              ) : (
-                <span>#{team.rank}</span>
+        <div className="flex-1 min-w-0">
+          <CardHeader className="pb-2 pt-5 px-5">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4 min-w-0">
+                {/* Rank number */}
+                <div
+                  className="font-heading text-3xl font-extrabold tabular-nums shrink-0 w-10 text-center"
+                  style={{ color: rankInfo.color }}
+                >
+                  {team.rank}
+                </div>
+                <div className="min-w-0">
+                  <CardTitle className="font-heading text-lg font-bold tracking-tight truncate">
+                    {team.name}
+                  </CardTitle>
+                  <p className="text-xs font-medium text-smoke mt-0.5">{rankInfo.label}</p>
+                </div>
+              </div>
+              {/* Score */}
+              <div className="text-right shrink-0">
+                <div
+                  className="font-heading text-4xl font-extrabold tabular-nums leading-none"
+                  style={{ color: team.color }}
+                >
+                  {team.total}
+                </div>
+                <div className="text-[10px] font-medium text-smoke uppercase tracking-widest mt-1">PTS</div>
+              </div>
+            </div>
+
+            {/* Score breakdown pills */}
+            <div className="flex flex-wrap gap-2 mt-3">
+              <span className="inline-flex items-center gap-1 text-xs font-medium bg-campfire/8 text-campfire px-2.5 py-1 rounded-full">
+                <Trophy className="h-3 w-3" />
+                +{team.gamePoints} games
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs font-medium bg-flame/8 text-flame px-2.5 py-1 rounded-full">
+                <Target className="h-3 w-3" />
+                +{team.missionPoints} missions
+              </span>
+              {team.deductionPoints > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium bg-destructive/8 text-destructive px-2.5 py-1 rounded-full">
+                  <AlertTriangle className="h-3 w-3" />
+                  -{team.deductionPoints} deducted
+                </span>
               )}
             </div>
-            <div>
-              <CardTitle className="text-xl font-extrabold uppercase tracking-tight">
-                {team.name}
-              </CardTitle>
-              <p className="text-xs font-bold text-smoke uppercase tracking-wide">{medal.label}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-4xl font-black" style={{ color: team.color }}>
-              {team.total}
-            </div>
-            <div className="text-[10px] font-bold text-smoke uppercase tracking-widest">points</div>
-          </div>
-        </div>
+          </CardHeader>
 
-        {/* Score breakdown */}
-        <div className="flex flex-wrap gap-2 mt-4">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-campfire/10 text-campfire px-3 py-1.5 rounded-full">
-            <Trophy className="h-3 w-3" />
-            +{team.gamePoints} games
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-flame/10 text-flame px-3 py-1.5 rounded-full">
-            <Target className="h-3 w-3" />
-            +{team.missionPoints} missions
-          </span>
-          {team.deductionPoints > 0 && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-destructive/10 text-destructive px-3 py-1.5 rounded-full">
-              <AlertTriangle className="h-3 w-3" />
-              -{team.deductionPoints} deducted
-            </span>
+          {/* Expand toggle */}
+          <button
+            type="button"
+            className="w-full px-5 py-2.5 flex items-center justify-center gap-1.5 text-xs font-medium text-smoke hover:text-charcoal transition-colors border-t border-border/60"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            {expanded ? "Hide breakdown" : "View breakdown"}
+          </button>
+
+          {expanded && (
+            <CardContent className="pt-0 px-5 pb-5">
+              <Tabs defaultValue="games">
+                <TabsList className="w-full">
+                  <TabsTrigger value="games" className="flex-1 text-xs font-medium">
+                    Games {teamGameScores.length > 0 && `(${teamGameScores.length})`}
+                  </TabsTrigger>
+                  <TabsTrigger value="missions" className="flex-1 text-xs font-medium">
+                    Missions {teamMissions.length > 0 && `(${teamMissions.length})`}
+                  </TabsTrigger>
+                  {teamDeductions.length > 0 && (
+                    <TabsTrigger value="deductions" className="flex-1 text-xs font-medium text-destructive">
+                      Deductions ({teamDeductions.length})
+                    </TabsTrigger>
+                  )}
+                </TabsList>
+
+                <TabsContent value="games">
+                  {teamGameScores.length === 0 ? (
+                    <p className="text-sm text-smoke py-4 text-center">No game scores yet</p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs font-medium text-smoke">Game</TableHead>
+                          <TableHead className="text-center text-xs font-medium text-smoke">Rank</TableHead>
+                          <TableHead className="text-right text-xs font-medium text-smoke">Points</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {teamGameScores.map(({ game, rank, points }) => (
+                          <TableRow key={game.id}>
+                            <TableCell className="font-medium">{game.name}</TableCell>
+                            <TableCell className="text-center font-medium">{RANK_LABEL[rank]}</TableCell>
+                            <TableCell className="text-right font-semibold text-campfire tabular-nums">
+                              +{points}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="missions">
+                  {teamMissions.length === 0 ? (
+                    <p className="text-sm text-smoke py-4 text-center">No missions completed yet</p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs font-medium text-smoke">Mission</TableHead>
+                          <TableHead className="text-right text-xs font-medium text-smoke">Points</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {teamMissions.map((mission) => (
+                          <TableRow key={mission.id}>
+                            <TableCell className="font-medium">{mission.name}</TableCell>
+                            <TableCell className="text-right font-semibold text-campfire tabular-nums">
+                              +{mission.points}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </TabsContent>
+
+                {teamDeductions.length > 0 && (
+                  <TabsContent value="deductions">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs font-medium text-smoke">Reason</TableHead>
+                          <TableHead className="text-right text-xs font-medium text-smoke">Points</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {teamDeductions.map((d) => (
+                          <TableRow key={d.id}>
+                            <TableCell className="font-medium">{d.reason}</TableCell>
+                            <TableCell className="text-right font-semibold text-destructive tabular-nums">
+                              -{d.amount}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
+                )}
+              </Tabs>
+            </CardContent>
           )}
         </div>
-      </CardHeader>
-
-      {/* Expand toggle */}
-      <button
-        type="button"
-        className="w-full px-6 pb-3 flex items-center justify-center gap-1.5 text-xs font-bold text-smoke hover:text-ash transition-colors uppercase tracking-wide"
-        onClick={() => setExpanded((v) => !v)}
-      >
-        {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        {expanded ? "Hide breakdown" : "View breakdown"}
-      </button>
-
-      {expanded && (
-        <CardContent className="pt-0">
-          <Tabs defaultValue="games">
-            <TabsList className="w-full">
-              <TabsTrigger value="games" className="flex-1 font-bold text-xs uppercase">
-                Games {teamGameScores.length > 0 && `(${teamGameScores.length})`}
-              </TabsTrigger>
-              <TabsTrigger value="missions" className="flex-1 font-bold text-xs uppercase">
-                Missions {teamMissions.length > 0 && `(${teamMissions.length})`}
-              </TabsTrigger>
-              {teamDeductions.length > 0 && (
-                <TabsTrigger value="deductions" className="flex-1 font-bold text-xs uppercase text-destructive">
-                  Deductions ({teamDeductions.length})
-                </TabsTrigger>
-              )}
-            </TabsList>
-
-            <TabsContent value="games">
-              {teamGameScores.length === 0 ? (
-                <p className="text-sm font-medium text-smoke py-4 text-center">No game scores yet</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="font-bold text-xs uppercase">Game</TableHead>
-                      <TableHead className="text-center font-bold text-xs uppercase">Rank</TableHead>
-                      <TableHead className="text-right font-bold text-xs uppercase">Points</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {teamGameScores.map(({ game, rank, points }) => (
-                      <TableRow key={game.id}>
-                        <TableCell className="font-semibold">{game.name}</TableCell>
-                        <TableCell className="text-center font-bold">{RANK_LABEL[rank]}</TableCell>
-                        <TableCell className="text-right font-black text-campfire">
-                          +{points}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </TabsContent>
-
-            <TabsContent value="missions">
-              {teamMissions.length === 0 ? (
-                <p className="text-sm font-medium text-smoke py-4 text-center">No missions completed yet</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="font-bold text-xs uppercase">Mission</TableHead>
-                      <TableHead className="text-right font-bold text-xs uppercase">Points</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {teamMissions.map((mission) => (
-                      <TableRow key={mission.id}>
-                        <TableCell className="font-semibold">{mission.name}</TableCell>
-                        <TableCell className="text-right font-black text-campfire">
-                          +{mission.points}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </TabsContent>
-
-            {teamDeductions.length > 0 && (
-              <TabsContent value="deductions">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="font-bold text-xs uppercase">Reason</TableHead>
-                      <TableHead className="text-right font-bold text-xs uppercase">Points</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {teamDeductions.map((d) => (
-                      <TableRow key={d.id}>
-                        <TableCell className="font-semibold">{d.reason}</TableCell>
-                        <TableCell className="text-right font-black text-destructive">
-                          -{d.amount}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TabsContent>
-            )}
-          </Tabs>
-        </CardContent>
-      )}
+      </div>
     </Card>
   );
 }
