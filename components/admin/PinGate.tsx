@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Flame, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,14 +37,16 @@ export function PinGate({ children }: { children: React.ReactNode }) {
   if (authenticated) return <>{children}</>;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 px-4">
-      <Card className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-charcoal px-4">
+      <Card className="w-full max-w-sm bg-ash border-2 border-white/10">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-3 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl p-3 w-fit">
+          <div className="mx-auto mb-3 bg-flame rounded-xl p-3.5 w-fit">
             <Flame className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl">Lagablab Admin</CardTitle>
-          <CardDescription className="flex items-center justify-center gap-1">
+          <CardTitle className="text-2xl font-black text-white uppercase tracking-tight">
+            Lagablab Admin
+          </CardTitle>
+          <CardDescription className="flex items-center justify-center gap-1.5 text-white/40 font-bold text-xs uppercase tracking-wide">
             <Lock className="h-3 w-3" /> Enter your PIN to continue
           </CardDescription>
         </CardHeader>
@@ -62,14 +63,14 @@ export function PinGate({ children }: { children: React.ReactNode }) {
               }}
               maxLength={10}
               autoFocus
-              className={`text-center text-xl tracking-widest ${error ? "border-destructive" : ""}`}
+              className={`text-center text-xl tracking-widest font-bold bg-charcoal border-white/20 text-white placeholder:text-white/30 ${error ? "border-destructive" : ""}`}
             />
             {error && (
-              <p className="text-sm text-destructive text-center">
+              <p className="text-sm font-bold text-destructive text-center">
                 {error} {attempts >= 3 && "(Hint: check your .env.local)"}
               </p>
             )}
-            <Button type="submit" className="w-full" size="lg">
+            <Button type="submit" className="w-full font-black uppercase tracking-wide bg-flame hover:bg-ember text-white" size="lg">
               Unlock Admin Panel
             </Button>
           </form>

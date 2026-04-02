@@ -6,7 +6,7 @@ import { AdminNav } from "@/components/admin/AdminNav";
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <PinGate>
-      <div className="flex h-screen overflow-hidden bg-muted/30">
+      <div className="flex h-screen overflow-hidden bg-warmwhite">
         <AdminNav />
         <main className="flex-1 overflow-y-auto">
           {children}

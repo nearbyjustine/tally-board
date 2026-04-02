@@ -102,10 +102,10 @@ export default function DeductionsPage() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Deductions</h1>
-          <p className="text-muted-foreground text-sm">{deductions.length} deductions · {totalDeducted} pts total removed</p>
+          <h1 className="text-2xl font-black uppercase tracking-tight">Deductions</h1>
+          <p className="text-smoke text-sm font-semibold">{deductions.length} deductions · {totalDeducted} pts total removed</p>
         </div>
-        <Button onClick={() => openAddDeduction()} className="gap-2 bg-destructive hover:bg-destructive/90">
+        <Button onClick={() => openAddDeduction()} className="gap-2 bg-destructive hover:bg-destructive/90 font-bold">
           <Plus className="h-4 w-4" /> Apply Deduction
         </Button>
       </div>

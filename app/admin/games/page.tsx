@@ -167,10 +167,10 @@ export default function GamesPage() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Games & Scores</h1>
-          <p className="text-muted-foreground text-sm">{games.length} games · {gameScores.length} scores recorded</p>
+          <h1 className="text-2xl font-black uppercase tracking-tight">Games & Scores</h1>
+          <p className="text-smoke text-sm font-semibold">{games.length} games · {gameScores.length} scores recorded</p>
         </div>
-        <Button onClick={openAddGame} className="gap-2">
+        <Button onClick={openAddGame} className="gap-2 bg-flame hover:bg-ember text-white font-bold">
           <Plus className="h-4 w-4" /> Add Game
         </Button>
       </div>
