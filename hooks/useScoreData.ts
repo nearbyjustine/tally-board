@@ -10,6 +10,7 @@ import type {
   MissionCompletion,
   Deduction,
   Member,
+  TeamImage,
 } from "@/lib/types";
 
 export interface ScoreData {
@@ -20,6 +21,7 @@ export interface ScoreData {
   missions: Mission[];
   missionCompletions: MissionCompletion[];
   deductions: Deduction[];
+  teamImages: TeamImage[];
   loading: boolean;
 }
 
@@ -32,6 +34,7 @@ export function useScoreData(): ScoreData {
     missions: [],
     missionCompletions: [],
     deductions: [],
+    teamImages: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -45,6 +48,7 @@ export function useScoreData(): ScoreData {
       { data: missions },
       { data: missionCompletions },
       { data: deductions },
+      { data: teamImages },
     ] = await Promise.all([
       supabase.from("teams").select("*").order("created_at"),
       supabase.from("members").select("*").order("created_at"),
@@ -53,6 +57,7 @@ export function useScoreData(): ScoreData {
       supabase.from("missions").select("*").order("created_at"),
       supabase.from("mission_completions").select("*"),
       supabase.from("deductions").select("*").order("created_at"),
+      supabase.from("team_images").select("*").order("created_at"),
     ]);
 
     setData({
@@ -63,6 +68,7 @@ export function useScoreData(): ScoreData {
       missions: missions ?? [],
       missionCompletions: missionCompletions ?? [],
       deductions: deductions ?? [],
+      teamImages: teamImages ?? [],
     });
     setLoading(false);
   }, []);
@@ -71,15 +77,6 @@ export function useScoreData(): ScoreData {
     fetchAll();
 
     const supabase = createClient();
-    const tables = [
-      "teams",
-      "members",
-      "games",
-      "game_scores",
-      "missions",
-      "mission_completions",
-      "deductions",
-    ];
 
     const channel = supabase
       .channel("realtime:all")
@@ -90,10 +87,8 @@ export function useScoreData(): ScoreData {
       .on("postgres_changes", { event: "*", schema: "public", table: "missions" }, fetchAll)
       .on("postgres_changes", { event: "*", schema: "public", table: "mission_completions" }, fetchAll)
       .on("postgres_changes", { event: "*", schema: "public", table: "deductions" }, fetchAll)
+      .on("postgres_changes", { event: "*", schema: "public", table: "team_images" }, fetchAll)
       .subscribe();
-
-    // Suppress unused variable warning
-    void tables;
 
     return () => {
       supabase.removeChannel(channel);

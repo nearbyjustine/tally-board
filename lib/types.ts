@@ -56,6 +56,13 @@ export type Deduction = {
   created_at: string;
 };
 
+export type TeamImage = {
+  id: string;
+  team_id: string;
+  url: string;
+  created_at: string;
+};
+
 // Enriched types for UI
 export type TeamWithScore = Team & {
   total: number;
@@ -109,6 +116,12 @@ export type Database = {
         Row: Deduction;
         Insert: { team_id: string; amount: number; reason: string };
         Update: { team_id?: string; amount?: number; reason?: string };
+        Relationships: [];
+      };
+      team_images: {
+        Row: TeamImage;
+        Insert: { team_id: string; url: string };
+        Update: { team_id?: string; url?: string };
         Relationships: [];
       };
     };

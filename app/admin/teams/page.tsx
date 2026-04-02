@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
-import type { Team, Member, MemberRole } from "@/lib/types";
+import type { Team, Member, MemberRole, TeamImage } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, UserPlus, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Pencil, Trash2, UserPlus, ChevronDown, ChevronUp, ImagePlus, X, Loader2 } from "lucide-react";
 
 const TEAM_COLORS = [
   "#ef4444", "#f97316", "#eab308", "#22c55e",
@@ -36,6 +35,7 @@ type TeamWithMembers = Team & { members: Member[] };
 
 export default function TeamsPage() {
   const [teams, setTeams] = useState<TeamWithMembers[]>([]);
+  const [teamImages, setTeamImages] = useState<TeamImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
 
@@ -53,16 +53,25 @@ export default function TeamsPage() {
   const [memberName, setMemberName] = useState("");
   const [memberRole, setMemberRole] = useState<MemberRole>("Member");
 
+  // Image upload state
+  const [uploading, setUploading] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadTeamId, setUploadTeamId] = useState("");
+
   const supabase = createClient();
 
   async function fetchData() {
-    const { data: teamsData } = await supabase.from("teams").select("*").order("created_at");
-    const { data: membersData } = await supabase.from("members").select("*").order("created_at");
+    const [{ data: teamsData }, { data: membersData }, { data: imagesData }] = await Promise.all([
+      supabase.from("teams").select("*").order("created_at"),
+      supabase.from("members").select("*").order("created_at"),
+      supabase.from("team_images").select("*").order("created_at"),
+    ]);
     const merged: TeamWithMembers[] = (teamsData ?? []).map((t) => ({
       ...t,
       members: (membersData ?? []).filter((m) => m.team_id === t.id),
     }));
     setTeams(merged);
+    setTeamImages(imagesData ?? []);
     setLoading(false);
   }
 
@@ -162,14 +171,89 @@ export default function TeamsPage() {
     fetchData();
   }
 
+  // ── Image Upload ──────────────────────────────────────────
+  function triggerImageUpload(teamId: string) {
+    setUploadTeamId(teamId);
+    fileInputRef.current?.click();
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !uploadTeamId) return;
+
+    const ext = file.name.split(".").pop();
+    const path = `${uploadTeamId}/${Date.now()}.${ext}`;
+
+    setUploading(uploadTeamId);
+
+    const { error: uploadError } = await supabase.storage
+      .from("team-images")
+      .upload(path, file);
+
+    if (uploadError) {
+      toast.error("Failed to upload image. Make sure the 'team-images' storage bucket exists.");
+      setUploading(null);
+      // Reset file input
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("team-images")
+      .getPublicUrl(path);
+
+    const { error: insertError } = await supabase
+      .from("team_images")
+      .insert({ team_id: uploadTeamId, url: urlData.publicUrl });
+
+    if (insertError) {
+      toast.error("Image uploaded but failed to save record");
+    } else {
+      toast.success("Image uploaded!");
+    }
+
+    setUploading(null);
+    // Reset file input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    fetchData();
+  }
+
+  async function deleteImage(image: TeamImage) {
+    if (!confirm("Delete this image?")) return;
+
+    // Extract storage path from URL
+    const urlParts = image.url.split("/team-images/");
+    if (urlParts[1]) {
+      await supabase.storage.from("team-images").remove([urlParts[1]]);
+    }
+
+    const { error } = await supabase.from("team_images").delete().eq("id", image.id);
+    if (error) toast.error("Failed to delete image");
+    else toast.success("Image deleted");
+    fetchData();
+  }
+
   const roleColor: Record<MemberRole, string> = {
     "Leader": "bg-yellow-100 text-yellow-800 border-yellow-200",
     "Assistant Leader": "bg-blue-100 text-blue-800 border-blue-200",
     "Member": "bg-gray-100 text-gray-700 border-gray-200",
   };
 
+  function getTeamImages(teamId: string) {
+    return teamImages.filter((img) => img.team_id === teamId);
+  }
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
+      {/* Hidden file input for image uploads */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImageUpload}
+      />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-2xl font-bold tracking-tight">Teams & Members</h1>
@@ -192,72 +276,126 @@ export default function TeamsPage() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {teams.map((team) => (
-            <Card key={team.id} className="overflow-hidden">
-              <div className="h-1.5 w-full" style={{ backgroundColor: team.color }} />
-              <CardHeader className="py-3 px-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full border-2" style={{ backgroundColor: team.color + "30", borderColor: team.color }} />
-                    <div>
-                      <CardTitle className="text-base">{team.name}</CardTitle>
-                      <p className="text-xs text-muted-foreground">{team.members.length} member{team.members.length !== 1 ? "s" : ""}</p>
+          {teams.map((team) => {
+            const images = getTeamImages(team.id);
+            return (
+              <Card key={team.id} className="overflow-hidden">
+                <div className="h-1.5 w-full" style={{ backgroundColor: team.color }} />
+                <CardHeader className="py-3 px-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full border-2" style={{ backgroundColor: team.color + "30", borderColor: team.color }} />
+                      <div>
+                        <CardTitle className="text-base">{team.name}</CardTitle>
+                        <p className="text-xs text-muted-foreground">
+                          {team.members.length} member{team.members.length !== 1 ? "s" : ""} · {images.length} image{images.length !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => openAddMember(team.id)}>
+                        <UserPlus className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => openEditTeam(team)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => deleteTeam(team)} className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setExpandedTeam(expandedTeam === team.id ? null : team.id)}
+                      >
+                        {expandedTeam === team.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => openAddMember(team.id)}>
-                      <UserPlus className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => openEditTeam(team)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteTeam(team)} className="text-destructive hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setExpandedTeam(expandedTeam === team.id ? null : team.id)}
-                    >
-                      {expandedTeam === team.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
+                </CardHeader>
 
-              {expandedTeam === team.id && (
-                <CardContent className="pt-0 pb-4 px-5">
-                  {team.members.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-2">No members yet.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {team.members.map((member) => (
-                        <div key={member.id} className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-muted/50">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">{member.name}</span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${roleColor[member.role]}`}>
-                              {member.role}
-                            </span>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditMember(member)}>
-                              <Pencil className="h-3 w-3" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteMember(member)}>
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
+                {expandedTeam === team.id && (
+                  <CardContent className="pt-0 pb-4 px-5 space-y-4">
+                    {/* Members section */}
+                    <div>
+                      <h3 className="text-xs font-medium text-smoke uppercase tracking-wide mb-2">Members</h3>
+                      {team.members.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-2">No members yet.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {team.members.map((member) => (
+                            <div key={member.id} className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-muted/50">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">{member.name}</span>
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${roleColor[member.role]}`}>
+                                  {member.role}
+                                </span>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditMember(member)}>
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteMember(member)}>
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
+                      <Button variant="outline" size="sm" className="mt-2 gap-1" onClick={() => openAddMember(team.id)}>
+                        <UserPlus className="h-3.5 w-3.5" /> Add Member
+                      </Button>
                     </div>
-                  )}
-                  <Button variant="outline" size="sm" className="mt-3 gap-1" onClick={() => openAddMember(team.id)}>
-                    <UserPlus className="h-3.5 w-3.5" /> Add Member
-                  </Button>
-                </CardContent>
-              )}
-            </Card>
-          ))}
+
+                    {/* Images section */}
+                    <div className="border-t border-border pt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-xs font-medium text-smoke uppercase tracking-wide">Team Images</h3>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                          onClick={() => triggerImageUpload(team.id)}
+                          disabled={uploading === team.id}
+                        >
+                          {uploading === team.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <ImagePlus className="h-3.5 w-3.5" />
+                          )}
+                          {uploading === team.id ? "Uploading..." : "Upload"}
+                        </Button>
+                      </div>
+                      {images.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-2">
+                          No images yet. Upload images to display as the team&apos;s dashboard background.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                          {images.map((image) => (
+                            <div key={image.id} className="relative group aspect-video rounded-lg overflow-hidden bg-muted">
+                              <img
+                                src={image.url}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => deleteImage(image)}
+                                className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            );
+          })}
         </div>
       )}
 

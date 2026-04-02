@@ -124,3 +124,16 @@ create policy "Public read deductions" on deductions for select using (true);
 create policy "Anon insert deductions" on deductions for insert with check (true);
 create policy "Anon update deductions" on deductions for update using (true);
 create policy "Anon delete deductions" on deductions for delete using (true);
+
+-- Team Images (for dashboard background cycling)
+create table if not exists team_images (
+  id uuid primary key default gen_random_uuid(),
+  team_id uuid not null references teams(id) on delete cascade,
+  url text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table team_images enable row level security;
+create policy "Public read team_images" on team_images for select using (true);
+create policy "Anon insert team_images" on team_images for insert with check (true);
+create policy "Anon delete team_images" on team_images for delete using (true);

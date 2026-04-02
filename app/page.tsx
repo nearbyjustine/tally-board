@@ -2,11 +2,11 @@
 
 import { useScoreData } from "@/hooks/useScoreData";
 import { computeTeamScores } from "@/utils/scoring";
-import { TeamCard } from "@/components/dashboard/TeamCard";
-import { Flame, Shield, Trophy, Target, Users } from "lucide-react";
+import { TeamColumn } from "@/components/dashboard/TeamColumn";
+import { Flame, Shield } from "lucide-react";
 
 export default function Dashboard() {
-  const { teams, members, games, gameScores, missions, missionCompletions, deductions, loading } =
+  const { teams, members, games, gameScores, missions, missionCompletions, deductions, teamImages, loading } =
     useScoreData();
 
   const rankedTeams = computeTeamScores(
@@ -19,102 +19,85 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-warmwhite bg-dot-pattern">
-      {/* Header */}
-      <header className="bg-charcoal sticky top-0 z-10 border-b border-white/10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-flame rounded-xl p-2.5">
-              <Flame className="h-5 w-5 text-white" />
+    <div className="h-screen w-screen overflow-hidden bg-charcoal relative">
+      {/* Floating header */}
+      <header className="absolute top-0 left-0 right-0 z-20 pointer-events-none">
+        <div className="flex items-center justify-between px-5 py-4">
+          <div className="flex items-center gap-3 pointer-events-auto">
+            <div className="bg-flame rounded-lg p-1.5">
+              <Flame className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h1 className="font-heading text-xl font-extrabold tracking-tight text-white">
+              <h1 className="font-heading text-sm font-bold text-white/90 tracking-tight">
                 Lagablab
               </h1>
-              <p className="text-[11px] font-medium text-white/40 uppercase tracking-widest">
-                Youth Camp Scoreboard
-              </p>
             </div>
           </div>
-          <a
-            href="/admin"
-            className="flex items-center gap-1.5 text-xs font-medium text-white/40 hover:text-white/70 transition-colors"
-          >
-            <Shield className="h-3.5 w-3.5" />
-            Admin
-          </a>
+          <div className="flex items-center gap-4 pointer-events-auto">
+            <span className="flex items-center gap-2 text-[11px] font-medium text-white/50 uppercase tracking-wide">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+              </span>
+              Live
+            </span>
+            <a
+              href="/admin"
+              className="flex items-center gap-1 text-[11px] font-medium text-white/30 hover:text-white/60 transition-colors"
+            >
+              <Shield className="h-3 w-3" />
+              Admin
+            </a>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-36 rounded-2xl bg-white shadow-card animate-pulse" />
-            ))}
+      {loading ? (
+        /* Loading state */
+        <div className="h-full flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="bg-flame rounded-xl p-3 animate-pulse">
+              <Flame className="h-8 w-8 text-white" />
+            </div>
+            <p className="text-white/40 text-sm font-medium">Loading scores...</p>
           </div>
-        ) : rankedTeams.length === 0 ? (
-          <div className="text-center py-24">
-            <div className="bg-flame/8 rounded-2xl p-6 w-fit mx-auto mb-5">
+        </div>
+      ) : rankedTeams.length === 0 ? (
+        /* Empty state */
+        <div className="h-full flex items-center justify-center">
+          <div className="text-center">
+            <div className="bg-white/5 rounded-2xl p-6 w-fit mx-auto mb-5">
               <Flame className="h-14 w-14 text-flame" />
             </div>
-            <h2 className="font-heading text-xl font-bold text-charcoal">No teams yet</h2>
-            <p className="text-sm text-smoke mt-2">
+            <h2 className="font-heading text-xl font-bold text-white">No teams yet</h2>
+            <p className="text-sm text-white/40 mt-2">
               Head to the admin panel to set up teams and games.
             </p>
           </div>
-        ) : (
-          <>
-            {/* Section header */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-heading text-xl font-bold tracking-tight text-charcoal">
-                Live Standings
-              </h2>
-              <span className="flex items-center gap-2 text-xs font-medium text-flame uppercase tracking-wide">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-flame opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-flame" />
-                </span>
-                Live
-              </span>
-            </div>
+        </div>
+      ) : (
+        /* Team columns */
+        <div className="h-full flex flex-row overflow-x-auto snap-x snap-mandatory md:overflow-hidden md:snap-none">
+          {rankedTeams.map((team, i) => (
+            <TeamColumn
+              key={team.id}
+              team={team}
+              images={teamImages.filter((img) => img.team_id === team.id)}
+              index={i}
+              total={rankedTeams.length}
+            />
+          ))}
+        </div>
+      )}
 
-            {/* Team cards */}
-            <div className="space-y-3">
-              {rankedTeams.map((team) => (
-                <TeamCard
-                  key={team.id}
-                  team={team}
-                  games={games}
-                  gameScores={gameScores}
-                  missions={missions}
-                  missionCompletions={missionCompletions}
-                  deductions={deductions}
-                />
-              ))}
-            </div>
-
-            {/* Stats */}
-            <div className="mt-10 grid grid-cols-3 gap-3">
-              <div className="bg-white rounded-xl p-5 shadow-card text-center">
-                <Trophy className="h-4 w-4 text-campfire mx-auto mb-2" />
-                <div className="font-heading text-2xl font-extrabold tabular-nums text-charcoal">{games.length}</div>
-                <div className="text-[11px] font-medium text-smoke uppercase tracking-wide mt-1">Games</div>
-              </div>
-              <div className="bg-white rounded-xl p-5 shadow-card text-center">
-                <Target className="h-4 w-4 text-flame mx-auto mb-2" />
-                <div className="font-heading text-2xl font-extrabold tabular-nums text-charcoal">{missionCompletions.length}</div>
-                <div className="text-[11px] font-medium text-smoke uppercase tracking-wide mt-1">Missions</div>
-              </div>
-              <div className="bg-white rounded-xl p-5 shadow-card text-center">
-                <Users className="h-4 w-4 text-ember mx-auto mb-2" />
-                <div className="font-heading text-2xl font-extrabold tabular-nums text-charcoal">{members.length}</div>
-                <div className="text-[11px] font-medium text-smoke uppercase tracking-wide mt-1">Campers</div>
-              </div>
-            </div>
-          </>
-        )}
-      </main>
+      {/* Mobile scroll indicator */}
+      {!loading && rankedTeams.length > 1 && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 md:hidden">
+          <div className="text-[10px] font-medium text-white/30 uppercase tracking-widest animate-pulse">
+            Swipe
+          </div>
+        </div>
+      )}
     </div>
   );
 }
