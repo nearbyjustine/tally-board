@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Users, Gamepad2, Target, MinusCircle, LayoutDashboard, LogOut } from "lucide-react";
+import { Flame, Users, Gamepad2, Target, MinusCircle, LayoutDashboard, LogOut, X } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
@@ -12,7 +12,12 @@ const NAV_ITEMS = [
   { href: "/admin/deductions", label: "Deductions", icon: MinusCircle },
 ];
 
-export function AdminNav() {
+interface AdminNavProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function AdminNav({ open, onClose }: AdminNavProps) {
   const pathname = usePathname();
 
   function isActive(href: string, exact?: boolean) {
@@ -25,17 +30,27 @@ export function AdminNav() {
     window.location.href = "/admin";
   }
 
-  return (
-    <aside className="w-64 shrink-0 bg-charcoal flex flex-col h-full border-r border-white/5">
+  const navContent = (
+    <>
       {/* Logo */}
-      <div className="p-5 flex items-center gap-3">
-        <div className="bg-flame rounded-xl p-2">
-          <Flame className="h-5 w-5 text-white" />
+      <div className="p-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="bg-flame rounded-xl p-2">
+            <Flame className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <div className="font-heading text-sm font-bold text-white tracking-tight">Lagablab</div>
+            <div className="text-[10px] font-medium text-white/35 uppercase tracking-widest">Admin</div>
+          </div>
         </div>
-        <div>
-          <div className="font-heading text-sm font-bold text-white tracking-tight">Lagablab</div>
-          <div className="text-[10px] font-medium text-white/35 uppercase tracking-widest">Admin</div>
-        </div>
+        {/* Close button — mobile only */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="md:hidden p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       {/* Nav links */}
@@ -44,6 +59,7 @@ export function AdminNav() {
           <Link
             key={href}
             href={href}
+            onClick={onClose}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               isActive(href, exact)
                 ? "bg-flame text-white"
@@ -66,6 +82,7 @@ export function AdminNav() {
           View Scoreboard
         </Link>
         <button
+          type="button"
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/45 hover:bg-white/5 hover:text-white/80 transition-colors"
         >
@@ -73,6 +90,33 @@ export function AdminNav() {
           Log out
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop sidebar — always visible */}
+      <aside className="hidden md:flex w-64 shrink-0 bg-charcoal flex-col h-full border-r border-white/5">
+        {navContent}
+      </aside>
+
+      {/* Mobile overlay */}
+      {open && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={onClose}
+            onKeyDown={(e) => e.key === "Escape" && onClose()}
+            role="button"
+            tabIndex={-1}
+          />
+          {/* Slide-in nav */}
+          <aside className="absolute inset-y-0 left-0 w-72 bg-charcoal flex flex-col animate-in slide-in-from-left duration-200">
+            {navContent}
+          </aside>
+        </div>
+      )}
+    </>
   );
 }
