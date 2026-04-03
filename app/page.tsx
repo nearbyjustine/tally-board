@@ -6,7 +6,7 @@ import { TeamColumn } from "@/components/dashboard/TeamColumn";
 import { Flame, Shield } from "lucide-react";
 
 export default function Dashboard() {
-  const { teams, members, games, gameScores, missions, missionCompletions, deductions, teamImages, loading } =
+  const { teams, members, games, gameScores, missions, missionCompletions, deductions, awards, teamImages, loading } =
     useScoreData();
 
   const rankedTeams = computeTeamScores(
@@ -15,7 +15,8 @@ export default function Dashboard() {
     gameScores,
     missions,
     missionCompletions,
-    deductions
+    deductions,
+    awards
   );
 
   return (

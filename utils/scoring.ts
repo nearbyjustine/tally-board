@@ -1,4 +1,4 @@
-import type { Team, Game, GameScore, Mission, MissionCompletion, Deduction, TeamWithScore } from "@/lib/types";
+import type { Team, Game, GameScore, Mission, MissionCompletion, Deduction, Award, TeamWithScore } from "@/lib/types";
 
 const RANK_KEY = ["points_1st", "points_2nd", "points_3rd", "points_4th"] as const;
 
@@ -8,7 +8,8 @@ export function computeTeamScores(
   gameScores: GameScore[],
   missions: Mission[],
   missionCompletions: MissionCompletion[],
-  deductions: Deduction[]
+  deductions: Deduction[],
+  awards: Award[]
 ): TeamWithScore[] {
   const gameMap = new Map<string, Game>(games.map((g) => [g.id, g]));
   const missionMap = new Map<string, Mission>(missions.map((m) => [m.id, m]));
@@ -34,7 +35,11 @@ export function computeTeamScores(
     const teamDeductions = deductions.filter((d) => d.team_id === team.id);
     const deductionPoints = teamDeductions.reduce((sum, d) => sum + d.amount, 0);
 
-    const total = gamePoints + missionPoints - deductionPoints;
+    // Awards
+    const teamAwards = awards.filter((a) => a.team_id === team.id);
+    const awardPoints = teamAwards.reduce((sum, a) => sum + a.amount, 0);
+
+    const total = gamePoints + missionPoints + awardPoints - deductionPoints;
 
     return {
       ...team,
@@ -42,6 +47,7 @@ export function computeTeamScores(
       gamePoints,
       missionPoints,
       deductionPoints,
+      awardPoints,
       rank: 0, // will be set below
     } as TeamWithScore;
   });

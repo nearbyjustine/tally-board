@@ -56,6 +56,14 @@ export type Deduction = {
   created_at: string;
 };
 
+export type Award = {
+  id: string;
+  team_id: string;
+  amount: number;
+  reason: string;
+  created_at: string;
+};
+
 export type TeamImage = {
   id: string;
   team_id: string;
@@ -69,6 +77,7 @@ export type TeamWithScore = Team & {
   gamePoints: number;
   missionPoints: number;
   deductionPoints: number;
+  awardPoints: number;
   rank: number;
 };
 
@@ -114,6 +123,12 @@ export type Database = {
       };
       deductions: {
         Row: Deduction;
+        Insert: { team_id: string; amount: number; reason: string };
+        Update: { team_id?: string; amount?: number; reason?: string };
+        Relationships: [];
+      };
+      awards: {
+        Row: Award;
         Insert: { team_id: string; amount: number; reason: string };
         Update: { team_id?: string; amount?: number; reason?: string };
         Relationships: [];

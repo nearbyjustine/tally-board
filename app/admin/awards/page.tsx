@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
-import type { Team, Deduction } from "@/lib/types";
+import type { Team, Award } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,107 +24,106 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { MinusCircle, Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Award as AwardIcon, Plus, Pencil, Trash2, Star } from "lucide-react";
 
-export default function DeductionsPage() {
+export default function AwardsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
-  const [deductions, setDeductions] = useState<Deduction[]>([]);
+  const [awards, setAwards] = useState<Award[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterTeam, setFilterTeam] = useState<string>("all");
 
-  // Deduction form
-  const [deductionDialog, setDeductionDialog] = useState(false);
-  const [deductTeamId, setDeductTeamId] = useState("");
-  const [deductAmount, setDeductAmount] = useState(10);
-  const [deductReason, setDeductReason] = useState("");
+  // Award form
+  const [awardDialog, setAwardDialog] = useState(false);
+  const [awardTeamId, setAwardTeamId] = useState("");
+  const [awardAmount, setAwardAmount] = useState(10);
+  const [awardReason, setAwardReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const supabase = createClient();
 
   async function fetchData() {
-    const [{ data: t }, { data: d }] = await Promise.all([
+    const [{ data: t }, { data: a }] = await Promise.all([
       supabase.from("teams").select("*").order("created_at"),
-      supabase.from("deductions").select("*").order("created_at", { ascending: false }),
+      supabase.from("awards").select("*").order("created_at", { ascending: false }),
     ]);
     setTeams(t ?? []);
-    setDeductions(d ?? []);
+    setAwards(a ?? []);
     setLoading(false);
   }
 
   useEffect(() => { fetchData(); }, []);
 
-  function openAddDeduction(preselectedTeamId?: string) {
+  function openAddAward(preselectedTeamId?: string) {
     setEditingId(null);
-    setDeductTeamId(preselectedTeamId ?? "");
-    setDeductAmount(10);
-    setDeductReason("");
-    setDeductionDialog(true);
+    setAwardTeamId(preselectedTeamId ?? "");
+    setAwardAmount(10);
+    setAwardReason("");
+    setAwardDialog(true);
   }
 
-  function openEditDeduction(deduction: Deduction) {
-    setEditingId(deduction.id);
-    setDeductTeamId(deduction.team_id);
-    setDeductAmount(deduction.amount);
-    setDeductReason(deduction.reason);
-    setDeductionDialog(true);
+  function openEditAward(award: Award) {
+    setEditingId(award.id);
+    setAwardTeamId(award.team_id);
+    setAwardAmount(award.amount);
+    setAwardReason(award.reason);
+    setAwardDialog(true);
   }
 
-  async function saveDeduction() {
-    if (!deductTeamId || !deductReason.trim() || deductAmount <= 0) return;
+  async function saveAward() {
+    if (!awardTeamId || !awardReason.trim() || awardAmount <= 0) return;
     setSaving(true);
-    const team = teams.find((t) => t.id === deductTeamId);
+    const team = teams.find((t) => t.id === awardTeamId);
     if (editingId) {
-      const { error } = await supabase.from("deductions").update({
-        team_id: deductTeamId,
-        amount: Number(deductAmount),
-        reason: deductReason.trim(),
+      const { error } = await supabase.from("awards").update({
+        team_id: awardTeamId,
+        amount: Number(awardAmount),
+        reason: awardReason.trim(),
       }).eq("id", editingId);
-      if (error) toast.error("Failed to update deduction");
-      else toast.success(`Deduction updated for ${team?.name}`);
+      if (error) toast.error("Failed to update award");
+      else toast.success(`Award updated for ${team?.name}`);
     } else {
-      const { error } = await supabase.from("deductions").insert({
-        team_id: deductTeamId,
-        amount: Number(deductAmount),
-        reason: deductReason.trim(),
+      const { error } = await supabase.from("awards").insert({
+        team_id: awardTeamId,
+        amount: Number(awardAmount),
+        reason: awardReason.trim(),
       });
-      if (error) toast.error("Failed to apply deduction");
-      else toast.warning(`⚠️ -${deductAmount} pts applied to ${team?.name}`);
+      if (error) toast.error("Failed to give award");
+      else toast.success(`🏆 +${awardAmount} pts awarded to ${team?.name}`);
     }
     setSaving(false);
-    setDeductionDialog(false);
+    setAwardDialog(false);
     fetchData();
   }
 
-  async function deleteDeduction(deduction: Deduction) {
-    const team = teams.find((t) => t.id === deduction.team_id);
-    if (!confirm(`Remove deduction of -${deduction.amount} pts from "${team?.name}"?\nReason: "${deduction.reason}"`)) return;
-    const { error } = await supabase.from("deductions").delete().eq("id", deduction.id);
-    if (error) toast.error("Failed to remove deduction");
-    else toast.success("Deduction removed");
+  async function deleteAward(award: Award) {
+    const team = teams.find((t) => t.id === award.team_id);
+    if (!confirm(`Remove award of +${award.amount} pts from "${team?.name}"?\nReason: "${award.reason}"`)) return;
+    const { error } = await supabase.from("awards").delete().eq("id", award.id);
+    if (error) toast.error("Failed to remove award");
+    else toast.success("Award removed");
     fetchData();
   }
 
-  // Stats per team
-  function teamDeductionTotal(teamId: string) {
-    return deductions.filter((d) => d.team_id === teamId).reduce((s, d) => s + d.amount, 0);
+  function teamAwardTotal(teamId: string) {
+    return awards.filter((a) => a.team_id === teamId).reduce((s, a) => s + a.amount, 0);
   }
 
-  const filteredDeductions = filterTeam === "all"
-    ? deductions
-    : deductions.filter((d) => d.team_id === filterTeam);
+  const filteredAwards = filterTeam === "all"
+    ? awards
+    : awards.filter((a) => a.team_id === filterTeam);
 
-  const totalDeducted = deductions.reduce((s, d) => s + d.amount, 0);
+  const totalAwarded = awards.reduce((s, a) => s + a.amount, 0);
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight">Deductions</h1>
-          <p className="text-smoke text-sm">{deductions.length} deductions · {totalDeducted} pts total removed</p>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">Awards</h1>
+          <p className="text-smoke text-sm">{awards.length} awards · {totalAwarded} pts total awarded</p>
         </div>
-        <Button onClick={() => openAddDeduction()} className="gap-2 bg-destructive hover:bg-destructive/90 font-heading font-semibold">
-          <Plus className="h-4 w-4" /> Apply Deduction
+        <Button onClick={() => openAddAward()} className="gap-2 bg-emerald-600 hover:bg-emerald-700 font-heading font-semibold">
+          <Plus className="h-4 w-4" /> Give Award
         </Button>
       </div>
 
@@ -132,11 +131,11 @@ export default function DeductionsPage() {
       {!loading && teams.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {teams.map((team) => {
-            const total = teamDeductionTotal(team.id);
+            const total = teamAwardTotal(team.id);
             return (
               <button
                 key={team.id}
-                onClick={() => openAddDeduction(team.id)}
+                onClick={() => openAddAward(team.id)}
                 className="text-left p-3 rounded-xl border-2 hover:shadow-md transition-shadow group"
                 style={{ borderColor: team.color + "60" }}
               >
@@ -144,11 +143,11 @@ export default function DeductionsPage() {
                   <div className="h-3 w-3 rounded-full" style={{ backgroundColor: team.color }} />
                   <span className="text-sm font-medium">{team.name}</span>
                 </div>
-                <div className="text-xl font-bold text-destructive">
-                  {total > 0 ? `-${total}` : "0"}
+                <div className="text-xl font-bold text-emerald-600">
+                  {total > 0 ? `+${total}` : "0"}
                 </div>
                 <div className="text-[10px] text-muted-foreground">
-                  {deductions.filter((d) => d.team_id === team.id).length} deductions
+                  {awards.filter((a) => a.team_id === team.id).length} awards
                 </div>
               </button>
             );
@@ -174,34 +173,34 @@ export default function DeductionsPage() {
             ))}
           </SelectContent>
         </Select>
-        <span className="text-sm text-muted-foreground">{filteredDeductions.length} results</span>
+        <span className="text-sm text-muted-foreground">{filteredAwards.length} results</span>
       </div>
 
       {loading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => <div key={i} className="h-16 rounded-xl bg-muted animate-pulse" />)}
         </div>
-      ) : filteredDeductions.length === 0 ? (
+      ) : filteredAwards.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-            No deductions yet. Keep it that way! 🎉
+            <Star className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+            No awards yet. Recognize great teamwork!
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-2">
-          {filteredDeductions.map((deduction) => {
-            const team = teams.find((t) => t.id === deduction.team_id);
+          {filteredAwards.map((award) => {
+            const team = teams.find((t) => t.id === award.team_id);
             return (
-              <Card key={deduction.id} className="overflow-hidden">
+              <Card key={award.id} className="overflow-hidden">
                 <div className="flex items-center">
                   <div className="w-1.5 self-stretch" style={{ backgroundColor: (team?.color ?? "#888") + "80" }} />
                   <CardContent className="flex-1 py-3 px-5 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <MinusCircle className="h-4 w-4 text-destructive shrink-0" />
+                      <AwardIcon className="h-4 w-4 text-emerald-600 shrink-0" />
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">{deduction.reason}</span>
+                          <span className="font-medium text-sm">{award.reason}</span>
                           {team && (
                             <span
                               className="text-[10px] px-2 py-0.5 rounded-full text-white font-medium"
@@ -212,21 +211,21 @@ export default function DeductionsPage() {
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(deduction.created_at).toLocaleDateString("en-PH", {
+                          {new Date(award.created_at).toLocaleDateString("en-PH", {
                             month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
                           })}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge variant="destructive" className="text-sm font-bold">
-                        -{deduction.amount} pts
+                      <Badge className="text-sm font-bold bg-emerald-600 hover:bg-emerald-600">
+                        +{award.amount} pts
                       </Badge>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="text-muted-foreground hover:text-foreground"
-                        onClick={() => openEditDeduction(deduction)}
+                        onClick={() => openEditAward(award)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -234,7 +233,7 @@ export default function DeductionsPage() {
                         variant="ghost"
                         size="icon"
                         className="text-muted-foreground hover:text-destructive"
-                        onClick={() => deleteDeduction(deduction)}
+                        onClick={() => deleteAward(award)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -247,18 +246,18 @@ export default function DeductionsPage() {
         </div>
       )}
 
-      {/* Deduction Dialog */}
-      <Dialog open={deductionDialog} onOpenChange={setDeductionDialog}>
+      {/* Award Dialog */}
+      <Dialog open={awardDialog} onOpenChange={setAwardDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" /> {editingId ? "Edit Deduction" : "Apply Deduction"}
+            <DialogTitle className="flex items-center gap-2 text-emerald-600">
+              <AwardIcon className="h-5 w-5" /> {editingId ? "Edit Award" : "Give Award"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label>Team</Label>
-              <Select value={deductTeamId} onValueChange={(v) => setDeductTeamId(v ?? "")}>
+              <Select value={awardTeamId} onValueChange={(v) => setAwardTeamId(v ?? "")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a team..." />
                 </SelectTrigger>
@@ -275,33 +274,33 @@ export default function DeductionsPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Points to Deduct</Label>
+              <Label>Bonus Points</Label>
               <Input
                 type="number"
-                value={deductAmount}
-                onChange={(e) => setDeductAmount(Number(e.target.value))}
+                value={awardAmount}
+                onChange={(e) => setAwardAmount(Number(e.target.value))}
                 min={1}
                 placeholder="e.g. 10"
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Reason <span className="text-destructive">*</span></Label>
+              <Label>Reason <span className="text-emerald-600">*</span></Label>
               <Textarea
-                value={deductReason}
-                onChange={(e) => setDeductReason(e.target.value)}
-                placeholder="Why is this deduction being applied?"
+                value={awardReason}
+                onChange={(e) => setAwardReason(e.target.value)}
+                placeholder="Why is this award being given?"
                 rows={2}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeductionDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setAwardDialog(false)}>Cancel</Button>
             <Button
-              variant="destructive"
-              onClick={saveDeduction}
-              disabled={!deductTeamId || !deductReason.trim() || deductAmount <= 0 || saving}
+              className="bg-emerald-600 hover:bg-emerald-700"
+              onClick={saveAward}
+              disabled={!awardTeamId || !awardReason.trim() || awardAmount <= 0 || saving}
             >
-              {saving ? "Saving..." : editingId ? "Update Deduction" : "Apply Deduction"}
+              {saving ? "Saving..." : editingId ? "Update Award" : "Give Award"}
             </Button>
           </DialogFooter>
         </DialogContent>

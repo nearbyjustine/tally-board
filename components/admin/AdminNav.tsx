@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Users, Gamepad2, Target, MinusCircle, LayoutDashboard, LogOut, X } from "lucide-react";
+import { Flame, Users, Gamepad2, Target, Award, MinusCircle, LayoutDashboard, LogOut, X } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/admin/teams", label: "Teams & Members", icon: Users },
   { href: "/admin/games", label: "Games & Scores", icon: Gamepad2 },
   { href: "/admin/missions", label: "Missions", icon: Target },
+  { href: "/admin/awards", label: "Awards", icon: Award },
   { href: "/admin/deductions", label: "Deductions", icon: MinusCircle },
 ];
 

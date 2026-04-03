@@ -5,20 +5,21 @@ import { computeTeamScores } from "@/utils/scoring";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { Users, Gamepad2, Target, MinusCircle, Trophy, ArrowRight } from "lucide-react";
+import { Users, Gamepad2, Target, MinusCircle, Award, Trophy, ArrowRight } from "lucide-react";
 
 export default function AdminOverview() {
-  const { teams, members, games, gameScores, missions, missionCompletions, deductions, loading } =
+  const { teams, members, games, gameScores, missions, missionCompletions, deductions, awards, loading } =
     useScoreData();
 
   const rankedTeams = computeTeamScores(
-    teams, games, gameScores, missions, missionCompletions, deductions
+    teams, games, gameScores, missions, missionCompletions, deductions, awards
   );
 
   const quickLinks = [
     { href: "/admin/teams", label: "Teams & Members", icon: Users, count: teams.length, sub: `${members.length} members`, color: "#3B82F6" },
     { href: "/admin/games", label: "Games & Scores", icon: Gamepad2, count: games.length, sub: `${gameScores.length} scores recorded`, color: "#8B5CF6" },
     { href: "/admin/missions", label: "Missions", icon: Target, count: missions.length, sub: `${missionCompletions.length} completions`, color: "#22C55E" },
+    { href: "/admin/awards", label: "Awards", icon: Award, count: awards.length, sub: `${awards.reduce((s, a) => s + a.amount, 0)} pts awarded`, color: "#16A34A" },
     { href: "/admin/deductions", label: "Deductions", icon: MinusCircle, count: deductions.length, sub: `${deductions.reduce((s, d) => s + d.amount, 0)} pts total`, color: "#DC2626" },
   ];
 
@@ -87,6 +88,7 @@ export default function AdminOverview() {
                       <div className="text-xs text-smoke hidden sm:flex gap-2">
                         <span>+{team.gamePoints} games</span>
                         {team.missionPoints > 0 && <span>+{team.missionPoints} missions</span>}
+                        {team.awardPoints > 0 && <span className="text-green-600">+{team.awardPoints} awards</span>}
                         {team.deductionPoints > 0 && <span className="text-destructive">-{team.deductionPoints}</span>}
                       </div>
                       <Badge

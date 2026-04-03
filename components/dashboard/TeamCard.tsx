@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { TeamWithScore, Game, GameScore, Mission, MissionCompletion, Deduction } from "@/lib/types";
+import type { TeamWithScore, Game, GameScore, Mission, MissionCompletion, Deduction, Award } from "@/lib/types";
 import { RANK_LABEL } from "@/utils/scoring";
-import { ChevronDown, ChevronUp, Trophy, Target, AlertTriangle } from "lucide-react";
+import { ChevronDown, ChevronUp, Trophy, Target, Award as AwardIcon, AlertTriangle } from "lucide-react";
 
 const RANK_STYLE: Record<number, { label: string; color: string }> = {
   1: { label: "1st Place", color: "#FACC15" },
@@ -22,6 +22,7 @@ interface TeamCardProps {
   missions: Mission[];
   missionCompletions: MissionCompletion[];
   deductions: Deduction[];
+  awards: Award[];
 }
 
 export function TeamCard({
@@ -31,6 +32,7 @@ export function TeamCard({
   missions,
   missionCompletions,
   deductions,
+  awards,
 }: TeamCardProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -52,6 +54,7 @@ export function TeamCard({
     .filter(Boolean) as Mission[];
 
   const teamDeductions = deductions.filter((d) => d.team_id === team.id);
+  const teamAwards = awards.filter((a) => a.team_id === team.id);
 
   return (
     <Card
@@ -101,6 +104,12 @@ export function TeamCard({
                 <Target className="h-3 w-3" />
                 +{team.missionPoints} missions
               </span>
+              {team.awardPoints > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium bg-emerald-500/8 text-emerald-600 px-2.5 py-1 rounded-full">
+                  <AwardIcon className="h-3 w-3" />
+                  +{team.awardPoints} awards
+                </span>
+              )}
               {team.deductionPoints > 0 && (
                 <span className="inline-flex items-center gap-1 text-xs font-medium bg-destructive/8 text-destructive px-2.5 py-1 rounded-full">
                   <AlertTriangle className="h-3 w-3" />
@@ -130,6 +139,11 @@ export function TeamCard({
                   <TabsTrigger value="missions" className="flex-1 text-xs font-medium">
                     Missions {teamMissions.length > 0 && `(${teamMissions.length})`}
                   </TabsTrigger>
+                  {teamAwards.length > 0 && (
+                    <TabsTrigger value="awards" className="flex-1 text-xs font-medium text-emerald-600">
+                      Awards ({teamAwards.length})
+                    </TabsTrigger>
+                  )}
                   {teamDeductions.length > 0 && (
                     <TabsTrigger value="deductions" className="flex-1 text-xs font-medium text-destructive">
                       Deductions ({teamDeductions.length})
@@ -188,6 +202,29 @@ export function TeamCard({
                     </Table>
                   )}
                 </TabsContent>
+
+                {teamAwards.length > 0 && (
+                  <TabsContent value="awards">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs font-medium text-smoke">Reason</TableHead>
+                          <TableHead className="text-right text-xs font-medium text-smoke">Points</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {teamAwards.map((a) => (
+                          <TableRow key={a.id}>
+                            <TableCell className="font-medium">{a.reason}</TableCell>
+                            <TableCell className="text-right font-semibold text-emerald-600 tabular-nums">
+                              +{a.amount}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
+                )}
 
                 {teamDeductions.length > 0 && (
                   <TabsContent value="deductions">

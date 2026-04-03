@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { TeamWithScore, TeamImage } from "@/lib/types";
-import { Trophy, Target, AlertTriangle } from "lucide-react";
+import { Trophy, Target, Award, AlertTriangle } from "lucide-react";
 
 const RANK_LABEL: Record<number, string> = {
   1: "1st",
@@ -144,6 +144,12 @@ export function TeamColumn({ team, images, index, total }: TeamColumnProps) {
               <Target className="h-3 w-3" />
               +{team.missionPoints}
             </span>
+            {team.awardPoints > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-300/80 bg-emerald-500/15 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                <Award className="h-3 w-3" />
+                +{team.awardPoints}
+              </span>
+            )}
             {team.deductionPoints > 0 && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-red-300/80 bg-red-500/15 backdrop-blur-sm px-2.5 py-1 rounded-full">
                 <AlertTriangle className="h-3 w-3" />

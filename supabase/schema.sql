@@ -125,6 +125,21 @@ create policy "Anon insert deductions" on deductions for insert with check (true
 create policy "Anon update deductions" on deductions for update using (true);
 create policy "Anon delete deductions" on deductions for delete using (true);
 
+-- Awards (bonus points — opposite of deductions)
+create table if not exists awards (
+  id uuid primary key default gen_random_uuid(),
+  team_id uuid not null references teams(id) on delete cascade,
+  amount integer not null check (amount > 0),
+  reason text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table awards enable row level security;
+create policy "Public read awards" on awards for select using (true);
+create policy "Anon insert awards" on awards for insert with check (true);
+create policy "Anon update awards" on awards for update using (true);
+create policy "Anon delete awards" on awards for delete using (true);
+
 -- Team Images (for dashboard background cycling)
 create table if not exists team_images (
   id uuid primary key default gen_random_uuid(),

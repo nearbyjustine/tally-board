@@ -9,6 +9,7 @@ import type {
   Mission,
   MissionCompletion,
   Deduction,
+  Award,
   Member,
   TeamImage,
 } from "@/lib/types";
@@ -21,6 +22,7 @@ export interface ScoreData {
   missions: Mission[];
   missionCompletions: MissionCompletion[];
   deductions: Deduction[];
+  awards: Award[];
   teamImages: TeamImage[];
   loading: boolean;
 }
@@ -34,6 +36,7 @@ export function useScoreData(): ScoreData {
     missions: [],
     missionCompletions: [],
     deductions: [],
+    awards: [],
     teamImages: [],
   });
   const [loading, setLoading] = useState(true);
@@ -48,6 +51,7 @@ export function useScoreData(): ScoreData {
       { data: missions },
       { data: missionCompletions },
       { data: deductions },
+      { data: awards },
       { data: teamImages },
     ] = await Promise.all([
       supabase.from("teams").select("*").order("created_at"),
@@ -57,6 +61,7 @@ export function useScoreData(): ScoreData {
       supabase.from("missions").select("*").order("created_at"),
       supabase.from("mission_completions").select("*"),
       supabase.from("deductions").select("*").order("created_at"),
+      supabase.from("awards").select("*").order("created_at"),
       supabase.from("team_images").select("*").order("created_at"),
     ]);
 
@@ -68,6 +73,7 @@ export function useScoreData(): ScoreData {
       missions: missions ?? [],
       missionCompletions: missionCompletions ?? [],
       deductions: deductions ?? [],
+      awards: awards ?? [],
       teamImages: teamImages ?? [],
     });
     setLoading(false);
@@ -87,6 +93,7 @@ export function useScoreData(): ScoreData {
       .on("postgres_changes", { event: "*", schema: "public", table: "missions" }, fetchAll)
       .on("postgres_changes", { event: "*", schema: "public", table: "mission_completions" }, fetchAll)
       .on("postgres_changes", { event: "*", schema: "public", table: "deductions" }, fetchAll)
+      .on("postgres_changes", { event: "*", schema: "public", table: "awards" }, fetchAll)
       .on("postgres_changes", { event: "*", schema: "public", table: "team_images" }, fetchAll)
       .subscribe();
 
